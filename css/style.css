@@ -1,0 +1,262 @@
+/**
+ * style.css
+ * Estilos para overlays HTML del Museo del Sistema Solar
+ */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  overflow: hidden;
+  background: #000;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ================================================================
+   PANTALLA DE CARGA
+   ================================================================ */
+#loading-screen {
+  position: fixed;
+  inset: 0;
+  background: #000008;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  transition: opacity 0.8s ease;
+}
+
+#loading-screen.fade-out {
+  opacity: 0;
+  pointer-events: none;
+}
+
+#loading-screen .logo {
+  font-size: 32px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 4px;
+  margin-bottom: 8px;
+  text-shadow: 0 0 20px #4488ff;
+}
+
+#loading-screen .subtitle {
+  font-size: 14px;
+  color: #667799;
+  letter-spacing: 6px;
+  margin-bottom: 40px;
+  text-transform: uppercase;
+}
+
+#loading-screen .loading-bar-track {
+  width: 320px;
+  height: 3px;
+  background: #1A1A3A;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+#loading-screen .loading-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #3366CC, #44AAFF, #3366CC);
+  border-radius: 2px;
+  animation: loadingAnim 2s ease-in-out infinite;
+  box-shadow: 0 0 10px #4488FF;
+}
+
+@keyframes loadingAnim {
+  0%   { width: 0; margin-left: 0; }
+  50%  { width: 70%; margin-left: 15%; }
+  100% { width: 0; margin-left: 100%; }
+}
+
+#loading-screen .loading-text {
+  font-size: 12px;
+  color: #445566;
+  margin-top: 16px;
+  letter-spacing: 2px;
+}
+
+/* ================================================================
+   OVERLAY DE CUADRO (proximidad)
+   ================================================================ */
+#painting-overlay {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 640px;
+  width: 90%;
+  background: rgba(5, 8, 25, 0.94);
+  border: 1px solid rgba(60, 100, 200, 0.5);
+  border-radius: 10px;
+  padding: 24px;
+  color: #D0E0FF;
+  z-index: 200;
+  transition: opacity 0.35s ease, transform 0.35s ease;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 40px rgba(0, 50, 150, 0.25);
+}
+
+#painting-overlay.hidden {
+  opacity: 0;
+  transform: translateX(-50%) translateY(20px);
+  pointer-events: none;
+}
+
+#painting-overlay.visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+  pointer-events: auto;
+}
+
+#painting-overlay h3 {
+  font-size: 22px;
+  color: #88BBFF;
+  margin-bottom: 14px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  border-bottom: 1px solid rgba(60, 100, 200, 0.3);
+  padding-bottom: 10px;
+}
+
+.po-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px 0;
+  font-size: 14px;
+}
+
+.po-label {
+  color: #6688BB;
+  min-width: 160px;
+}
+
+.po-value {
+  color: #C0D8FF;
+  text-align: right;
+  flex: 1;
+}
+
+.po-curiosity {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(60, 100, 200, 0.25);
+  font-style: italic;
+  color: #99AACC;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* ================================================================
+   OVERLAY DE AYUDA
+   ================================================================ */
+#help-overlay {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(5, 8, 25, 0.9);
+  border: 1px solid rgba(60, 100, 200, 0.4);
+  border-radius: 8px;
+  padding: 16px 28px;
+  color: #8899BB;
+  z-index: 150;
+  font-size: 13px;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+#help-overlay.hidden {
+  opacity: 0;
+}
+
+#help-overlay span {
+  color: #AABBEE;
+  font-weight: 600;
+  margin: 0 4px;
+}
+
+/* ================================================================
+   INDICADOR DE CONTROLES
+   ================================================================ */
+#controls-hint {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: rgba(120, 150, 200, 0.5);
+  font-size: 12px;
+  z-index: 50;
+  text-align: center;
+  pointer-events: none;
+  letter-spacing: 1px;
+}
+
+/* ================================================================
+   CURSOR VR
+   ================================================================ */
+.a-enter-vr {
+  position: fixed !important;
+  bottom: 30px !important;
+  right: 30px !important;
+}
+
+.a-enter-vr-button {
+  background: rgba(10, 20, 50, 0.85) !important;
+  border: 1px solid rgba(60, 100, 200, 0.5) !important;
+  border-radius: 8px !important;
+  transition: all 0.3s ease !important;
+  position: relative !important;
+}
+
+.a-enter-vr-button::after {
+  content: '🥽';
+  font-size: 28px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.a-enter-vr-button:hover {
+  border-color: rgba(100, 160, 255, 0.8) !important;
+  box-shadow: 0 0 20px rgba(60, 100, 200, 0.4) !important;
+}
+
+/* ================================================================
+   RESPONSIVE
+   ================================================================ */
+@media (max-width: 768px) {
+  #painting-overlay {
+    max-width: 92%;
+    padding: 16px;
+    bottom: 16px;
+  }
+
+  #painting-overlay h3 {
+    font-size: 18px;
+  }
+
+  .po-row {
+    font-size: 12px;
+  }
+
+  .po-label {
+    min-width: 120px;
+  }
+
+  #loading-screen .logo {
+    font-size: 24px;
+  }
+
+  #loading-screen .loading-bar-track {
+    width: 240px;
+  }
+}

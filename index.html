@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="description" content="Museo Inmersivo del Sistema Solar - Experiencia VR con A-Frame">
+  <title>Museo del Sistema Solar — VR</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+</head>
+<body>
+
+  <!-- ==================== ESCENA A-FRAME ==================== -->
+  <a-scene id="main-scene"
+           renderer="antialias: true; physicallyCorrectLights: true; colorManagement: true"
+           vr-mode-ui="enabled: true"
+           device-orientation-permission-ui="enabled: false"
+           background="color: #000008">
+
+    <!-- Assets (texturas generadas dinámicamente se insertan aquí) -->
+    <a-assets id="assets"></a-assets>
+
+    <!-- Luz ambiental de escena -->
+    <a-light type="ambient" color="#222244" intensity="0.4"></a-light>
+
+    <!-- ==================== CÁMARA RIG ==================== -->
+    <a-entity id="player" position="0 0 0">
+
+      <!-- Cámara principal -->
+      <a-entity id="camera-head"
+                camera="active: true"
+                position="0 1.6 35"
+                look-controls="pointerLockEnabled: true; reverseMouseDrag: false"
+                wasd-controls="acceleration: 80; fly: false"
+                wall-collision="bounds: 39.5 23.5 39.5">
+
+        <!-- Cursor VR con fuse de 2 segundos -->
+        <a-entity id="cursor"
+                  cursor="fuse: true; fuseTimeout: 2000; rayOrigin: entity"
+                  position="0 0 -0.8"
+                  geometry="primitive: ring; radiusInner: 0.018; radiusOuter: 0.028; segmentsTheta: 32"
+                  material="shader: flat; color: #44CCFF; transparent: true; opacity: 0.65; depthTest: false"
+                  animation__fuse="property: geometry.radiusOuter; from: 0.028; to: 0.04; dur: 2000; startEvents: fusing; easing: easeInOutQuad"
+                  animation__fuse2="property: geometry.radiusInner; from: 0.018; to: 0.03; dur: 2000; startEvents: fusing; easing: easeInOutQuad"
+                  animation__click="property: scale; from: 1 1 1; to: 1.5 1.5 1.5; dur: 200; startEvents: click; dir: alternate; loop: 1; easing: easeOutQuad">
+        </a-entity>
+      </a-entity>
+
+      <!-- Mano izquierda VR -->
+      <a-entity id="left-hand"
+                laser-controls="hand: left; model: false"
+                raycaster="objects: .clickable; far: 50"
+                line="color: #4488FF; opacity: 0.4">
+      </a-entity>
+
+      <!-- Mano derecha VR (para cursor VR y teleport) -->
+      <a-entity id="right-hand"
+                laser-controls="hand: right; model: false"
+                raycaster="objects: .clickable; far: 50"
+                line="color: #44CCFF; opacity: 0.5"
+                teleport-control="collisionEntities: .wall; hitEntity: .floor">
+      </a-entity>
+    </a-entity>
+
+    <!-- ==================== CONTENEDORES ==================== -->
+    <!-- Museo (salas, paredes, cuadros, luces) -->
+    <a-entity id="museum"></a-entity>
+
+    <!-- Sistema Solar (Sol, planetas, órbitas) -->
+    <a-entity id="solar-system"></a-entity>
+
+    <!-- Paneles UI flotantes -->
+    <a-entity id="ui-panels"></a-entity>
+
+  </a-scene>
+
+  <!-- ==================== OVERLAYS HTML ==================== -->
+
+  <!-- Overlay de cuadro (aparece al acercarse a una pared) -->
+  <div id="painting-overlay" class="hidden">
+    <div id="painting-content"></div>
+  </div>
+
+  <!-- Overlay de ayuda (tecla M) -->
+  <div id="help-overlay" class="hidden">
+    <span>W A S D</span> Mover &nbsp;|&nbsp;
+    <span>Rat&oacute;n</span> Mirar &nbsp;|&nbsp;
+    <span>Scroll</span> Zoom &nbsp;|&nbsp;
+    <span>Ac&eacute;rcate</span> a los cuadros para ver info &nbsp;|&nbsp;
+    <span>H</span> Cerrar panel &nbsp;|&nbsp;
+    <span>M</span> Ayuda &nbsp;|&nbsp;
+    <span>F</span> Vuelo &nbsp;|&nbsp;
+    <span>Esc</span> Cerrar todo
+  </div>
+
+  <!-- Indicador de controles -->
+  <div id="controls-hint">
+    M para ayuda &nbsp;|&nbsp; Ac&eacute;rcate a los cuadros de las paredes
+  </div>
+
+  <!-- Pantalla de carga -->
+  <div id="loading-screen">
+    <div class="logo">MUSEO DEL SISTEMA SOLAR</div>
+    <div class="subtitle">Experiencia Inmersiva VR</div>
+    <div class="loading-bar-track">
+      <div class="loading-bar-fill"></div>
+    </div>
+    <div class="loading-text">Generando texturas planetarias...</div>
+  </div>
+
+  <!-- ==================== SCRIPTS ==================== -->
+  <script src="js/components.js"></script>
+  <script src="js/planets.js"></script>
+  <script src="js/museum.js"></script>
+  <script src="js/ui.js"></script>
+
+  <script>
+    /**
+     * Inicialización principal tras carga del DOM
+     */
+    document.addEventListener('DOMContentLoaded', function () {
+      var loadingScreen = document.getElementById('loading-screen');
+
+      // Construir todos los sistemas
+      try {
+        initMuseum();
+        initSolarSystem();
+        initUI();
+        createShips();
+        createComets();
+        createAsteroidBelt();
+        createBlackHole();
+        createNebulae();
+        createAstronaut();
+        createMilkyWay();
+        createSupernova();
+        createPulsar();
+        createWormhole();
+        createTwinklingStars();
+      } catch (e) {
+        console.error('Error durante la inicialización:', e);
+      }
+
+      // Ocultar pantalla de carga con retardo
+      setTimeout(function () {
+        if (loadingScreen) {
+          loadingScreen.classList.add('fade-out');
+          setTimeout(function () {
+            if (loadingScreen.parentNode) {
+              loadingScreen.parentNode.removeChild(loadingScreen);
+            }
+          }, 800);
+        }
+      }, 2000);
+    });
+
+    /**
+     * Manejar entrada/salida de VR
+     */
+    var scene = document.querySelector('a-scene');
+    if (scene) {
+      scene.addEventListener('enter-vr', function () {
+        console.log('VR activado');
+        // Ajustes para VR
+        var help = document.getElementById('help-overlay');
+        if (help) help.classList.add('hidden');
+      });
+
+      scene.addEventListener('exit-vr', function () {
+        console.log('VR desactivado');
+      });
+    }
+
+    /**
+     * Prevenir comportamientos no deseados en móvil
+     */
+    document.addEventListener('touchmove', function (e) {
+      if (e.target.closest('a-scene')) {
+        e.preventDefault();
+      }
+    }, { passive: false });
+
+    /**
+     * Log de carga completada
+     */
+    console.log('%c Museo del Sistema Solar %c v1.0 ',
+      'background: #0A0A2E; color: #4488FF; padding: 8px 12px; border-radius: 4px 0 0 4px; font-weight: bold;',
+      'background: #4488FF; color: #0A0A2E; padding: 8px 12px; border-radius: 0 4px 4px 0;');
+    console.log('%c Arquitectura: %c components.js | planets.js | museum.js | ui.js | style.css',
+      'color: #6688BB;', 'color: #8899CC;');
+    console.log('%c Controles: WASD = mover | Ratón = mirar | Mirar 2s un planeta = info | M = ayuda',
+      'color: #556677;');
+  </script>
+
+</body>
+</html>
