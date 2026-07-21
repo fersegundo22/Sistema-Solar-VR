@@ -205,6 +205,7 @@ body {
   position: fixed !important;
   bottom: 30px !important;
   right: 30px !important;
+  left: auto !important;
 }
 
 .a-enter-vr-button {
