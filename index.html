@@ -141,15 +141,6 @@
         console.error('Error durante la inicialización:', e);
       }
 
-      // Forzar botón VR a la derecha
-      setTimeout(function () {
-        var vrBtn = document.querySelector('.a-enter-vr');
-        if (vrBtn) {
-          vrBtn.style.setProperty('left', 'auto', 'important');
-          vrBtn.style.setProperty('right', '30px', 'important');
-        }
-      }, 3000);
-
       // Ocultar pantalla de carga con retardo
       setTimeout(function () {
         if (loadingScreen) {
