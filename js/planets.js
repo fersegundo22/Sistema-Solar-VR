@@ -786,51 +786,311 @@ function createSun(container) {
   var sunGroup = document.createElement('a-entity');
   sunGroup.id = 'sun-group';
   sunGroup.setAttribute('position', '0 1.5 0');
+  var R = 4.5; // radio del Sol
 
-  var sunImg = document.createElement('img');
-  sunImg.id = 'tex-sun';
-  sunImg.src = TextureGen.get('sun').toDataURL();
-  var assets = document.getElementById('assets');
-  if (assets) assets.appendChild(sunImg);
+  // ================================================================
+  // SUPERFICIE: canvas animado con plasma procedural
+  // ================================================================
+  var surfCanvas = document.createElement('canvas');
+  surfCanvas.width = 256; surfCanvas.height = 128;
+  var sctx = surfCanvas.getContext('2d');
+  var surfTex = new THREE.CanvasTexture(surfCanvas);
+  surfTex.colorSpace = THREE.SRGBColorSpace;
 
+  var surfGeo = new THREE.SphereGeometry(R, 64, 48);
+  var surfMat = new THREE.MeshStandardMaterial({
+    map: surfTex,
+    emissive: new THREE.Color('#FF8800'),
+    emissiveIntensity: 4.0,
+    roughness: 0.2,
+    metalness: 0
+  });
+  var surfMesh = new THREE.Mesh(surfGeo, surfMat);
   var core = document.createElement('a-entity');
-  core.setAttribute('geometry', 'primitive: sphere; radius: 4.5; segmentsWidth: 64; segmentsHeight: 64');
-  core.setAttribute('material', 'shader: standard; emissive: #FF5500; emissiveIntensity: 3.5; color: #FF8800; roughness: 0.2; metalness: 0');
-  core.setAttribute('glow', 'base: 3.0; amplitude: 0.8; speed: 1.3');
-  core.setAttribute('pulse-scale', 'base: 1; amplitude: 0.03; speed: 1.5');
+  core.id = 'sun-core';
   core.setAttribute('gaze-info', 'planet: sun');
   core.classList.add('clickable');
+  core.object3D.add(surfMesh);
   sunGroup.appendChild(core);
 
-  var glow1 = document.createElement('a-entity');
-  glow1.setAttribute('geometry', 'primitive: sphere; radius: 5.0; segmentsWidth: 32; segmentsHeight: 32');
-  glow1.setAttribute('material', 'shader: flat; color: #FF7700; opacity: 0.25; transparent: true; depthWrite: false');
-  glow1.setAttribute('pulse-scale', 'base: 1; amplitude: 0.06; speed: 1.8');
-  sunGroup.appendChild(glow1);
+  // ================================================================
+  // HALOS (Fresnel-like)
+  // ================================================================
+  var haloDefs = [
+    { r: R * 1.25, color: '#FFFFFF', op: 0.30, em: '#FFFFFF', ei: 3.0 },
+    { r: R * 1.40, color: '#FFDD44', op: 0.18, em: '#FFCC00', ei: 2.0 },
+    { r: R * 1.60, color: '#FF8800', op: 0.09, em: '#FF6600', ei: 1.2 },
+    { r: R * 1.85, color: '#FF4400', op: 0.04, em: '#FF3300', ei: 0.6 }
+  ];
+  haloDefs.forEach(function (h, i) {
+    var el = document.createElement('a-entity');
+    el.setAttribute('geometry', 'primitive: sphere; radius: ' + h.r + '; segmentsWidth: 48; segmentsHeight: 24');
+    el.setAttribute('material', 'shader: standard; color: ' + h.color + '; opacity: ' + h.op + '; transparent: true; roughness: 0.5; metalness: 0; emissive: ' + h.em + '; emissiveIntensity: ' + h.ei + '; depthWrite: false; side: double');
+    el.setAttribute('pulse-scale', 'base: 1; amplitude: 0.03; speed: ' + (1.4 + i * 0.3));
+    sunGroup.appendChild(el);
+  });
 
-  var glow2 = document.createElement('a-entity');
-  glow2.setAttribute('geometry', 'primitive: sphere; radius: 5.5; segmentsWidth: 32; segmentsHeight: 32');
-  glow2.setAttribute('material', 'shader: flat; color: #FFAA33; opacity: 0.12; transparent: true; depthWrite: false');
-  glow2.setAttribute('pulse-scale', 'base: 1; amplitude: 0.04; speed: 2.2');
-  sunGroup.appendChild(glow2);
+  // ================================================================
+  // CORONA: partículas volumétricas (additive blending)
+  // ================================================================
+  var coronaCount = 800;
+  var coronaGeo = new THREE.BufferGeometry();
+  var coronaPos = new Float32Array(coronaCount * 3);
+  var coronaCol = new Float32Array(coronaCount * 3);
+  var coronaData = [];
+  for (var ci = 0; ci < coronaCount; ci++) {
+    var th = Math.random() * Math.PI * 2;
+    var ph = Math.acos(2 * Math.random() - 1);
+    var rr = R + 0.2 + Math.random() * 3.5;
+    coronaPos[ci * 3] = Math.sin(ph) * Math.cos(th) * rr;
+    coronaPos[ci * 3 + 1] = Math.sin(ph) * Math.sin(th) * rr;
+    coronaPos[ci * 3 + 2] = Math.cos(ph) * rr;
+    coronaCol[ci * 3] = 1;
+    coronaCol[ci * 3 + 1] = 0.5 + Math.random() * 0.5;
+    coronaCol[ci * 3 + 2] = 0.1 + Math.random() * 0.4;
+    coronaData.push({ th: th, ph: ph, baseR: rr, speed: 0.3 + Math.random() * 1.2, phase: Math.random() * Math.PI * 2 });
+  }
+  coronaGeo.setAttribute('position', new THREE.BufferAttribute(coronaPos, 3));
+  coronaGeo.setAttribute('color', new THREE.BufferAttribute(coronaCol, 3));
+  sunGroup.object3D.add(new THREE.Points(coronaGeo, new THREE.PointsMaterial({
+    size: 0.22, vertexColors: true, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0.6
+  })));
 
-  var glow3 = document.createElement('a-entity');
-  glow3.setAttribute('geometry', 'primitive: sphere; radius: 6.2; segmentsWidth: 32; segmentsHeight: 32');
-  glow3.setAttribute('material', 'shader: flat; color: #FF3300; opacity: 0.04; transparent: true; depthWrite: false');
-  sunGroup.appendChild(glow3);
+  // ================================================================
+  // VIENTO SOLAR
+  // ================================================================
+  var windCount = 400;
+  var windGeo = new THREE.BufferGeometry();
+  var windPos = new Float32Array(windCount * 3);
+  var windCol = new Float32Array(windCount * 3);
+  var windData = [];
+  for (var wi = 0; wi < windCount; wi++) {
+    var wt = Math.random() * Math.PI * 2;
+    var wp = Math.acos(2 * Math.random() - 1);
+    var wr = R + 0.5 + Math.random() * 7;
+    windPos[wi * 3] = Math.sin(wp) * Math.cos(wt) * wr;
+    windPos[wi * 3 + 1] = Math.sin(wp) * Math.sin(wt) * wr;
+    windPos[wi * 3 + 2] = Math.cos(wp) * wr;
+    windCol[wi * 3] = 1; windCol[wi * 3 + 1] = 0.6; windCol[wi * 3 + 2] = 0.2;
+    windData.push({ th: wt, ph: wp, r: wr, speed: 0.5 + Math.random() * 2, maxR: R + 10 + Math.random() * 8 });
+  }
+  windGeo.setAttribute('position', new THREE.BufferAttribute(windPos, 3));
+  windGeo.setAttribute('color', new THREE.BufferAttribute(windCol, 3));
+  sunGroup.object3D.add(new THREE.Points(windGeo, new THREE.PointsMaterial({
+    size: 0.06, vertexColors: true, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0.55
+  })));
 
+  // ================================================================
+  // PROTUBERANCIAS (arcos de plasma)
+  // ================================================================
+  var promGroup = document.createElement('a-entity');
+  var promData = [];
+  for (var pi = 0; pi < 5; pi++) {
+    var pa = (pi / 5) * Math.PI * 2 + Math.random() * 0.3;
+    var ph = 2.5 + Math.random() * 5;
+    var pw = 1.5 + Math.random() * 3;
+    var curve = new THREE.QuadraticBezierCurve3(
+      new THREE.Vector3(Math.cos(pa - 0.15) * R, Math.sin(pa - 0.15) * R * 0.2, 0),
+      new THREE.Vector3(Math.cos(pa) * (R + pw * 0.6), ph, Math.sin(pa) * (R + pw * 0.3)),
+      new THREE.Vector3(Math.cos(pa + 0.15) * R, Math.sin(pa + 0.15) * R * 0.2, 0)
+    );
+    var tube = new THREE.Mesh(
+      new THREE.TubeGeometry(curve, 32, 0.07, 8, false),
+      new THREE.MeshBasicMaterial({ color: new THREE.Color().setHSL(0.1, 1, 0.5 + Math.random() * 0.4), transparent: true, opacity: 0.5, depthWrite: false })
+    );
+    tube.rotation.z = (Math.random() - 0.5) * 50 * Math.PI / 180;
+    promGroup.object3D.add(tube);
+    promData.push({ mesh: tube, baseOp: 0.5 + Math.random() * 0.3, phase: Math.random() * Math.PI * 2 });
+  }
+  sunGroup.appendChild(promGroup);
+
+  // ================================================================
+  // ERUPCIONES SOLARES
+  // ================================================================
+  var flareCount = 200;
+  var flareGeo = new THREE.BufferGeometry();
+  var flarePos = new Float32Array(flareCount * 3);
+  var flareCol = new Float32Array(flareCount * 3);
+  var flareData = [];
+  for (var fi = 0; fi < flareCount; fi++) {
+    flarePos[fi * 3] = 0; flarePos[fi * 3 + 1] = 0; flarePos[fi * 3 + 2] = 0;
+    flareCol[fi * 3] = 1; flareCol[fi * 3 + 1] = 0.8; flareCol[fi * 3 + 2] = 0.2;
+    flareData.push({ active: false, th: 0, ph: 0, prog: 0, speed: 1 + Math.random() * 3, maxD: 2 + Math.random() * 5, cd: Math.random() * 8, cdMax: 3 + Math.random() * 10 });
+  }
+  flareGeo.setAttribute('position', new THREE.BufferAttribute(flarePos, 3));
+  flareGeo.setAttribute('color', new THREE.BufferAttribute(flareCol, 3));
+  sunGroup.object3D.add(new THREE.Points(flareGeo, new THREE.PointsMaterial({
+    size: 0.14, vertexColors: true, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0.85
+  })));
+
+  // ================================================================
+  // CHISPAS RÁPIDAS
+  // ================================================================
+  var sparkCount = 150;
+  var sparkGeo = new THREE.BufferGeometry();
+  var sparkPos = new Float32Array(sparkCount * 3);
+  var sparkData = [];
+  for (var si = 0; si < sparkCount; si++) {
+    sparkPos[si * 3] = 0; sparkPos[si * 3 + 1] = 0; sparkPos[si * 3 + 2] = 0;
+    sparkData.push({ th: Math.random() * Math.PI * 2, ph: Math.acos(2 * Math.random() - 1), speed: 6 + Math.random() * 18, life: 0, maxLife: 0.1 + Math.random() * 0.4, cd: Math.random() * 2 });
+  }
+  sparkGeo.setAttribute('position', new THREE.BufferAttribute(sparkPos, 3));
+  sunGroup.object3D.add(new THREE.Points(sparkGeo, new THREE.PointsMaterial({
+    size: 0.04, color: 0xFFFFFF, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0.8
+  })));
+
+  // ================================================================
+  // ILUMINACIÓN DINÁMICA
+  // ================================================================
   var sunLight = document.createElement('a-light');
   sunLight.setAttribute('type', 'point');
-  sunLight.setAttribute('intensity', '5');
-  sunLight.setAttribute('color', '#FFE8C0');
-  sunLight.setAttribute('distance', '140');
-  sunLight.setAttribute('decay', '1');
+  sunLight.setAttribute('intensity', '6');
+  sunLight.setAttribute('color', '#FFF0D0');
+  sunLight.setAttribute('distance', '150');
+  sunLight.setAttribute('decay', '0.9');
   sunGroup.appendChild(sunLight);
 
-  var particles = document.createElement('a-entity');
-  particles.setAttribute('solar-particles', 'count: 300; radius: 6; height: 3');
-  sunGroup.appendChild(particles);
+  var sunLight2 = document.createElement('a-light');
+  sunLight2.setAttribute('type', 'point');
+  sunLight2.setAttribute('intensity', '2.5');
+  sunLight2.setAttribute('color', '#FFCC88');
+  sunLight2.setAttribute('distance', '80');
+  sunLight2.setAttribute('decay', '1.2');
+  sunGroup.appendChild(sunLight2);
 
+  // ================================================================
+  // LOOP DE ANIMACIÓN UNIFICADO (canvas + partículas + luz)
+  // ================================================================
+  var lastT = performance.now();
+  var timeAcc = 0;
+
+  function animateSun() {
+    var now = performance.now();
+    var dt = Math.min((now - lastT) / 1000, 0.1);
+    lastT = now;
+    timeAcc += dt;
+
+    // ---- Superficie: dibujar plasma en canvas ----
+    var w = surfCanvas.width, h = surfCanvas.height;
+    var grad = sctx.createRadialGradient(w / 2, h / 2, 5, w / 2, h / 2, w / 2);
+    grad.addColorStop(0, '#FFEE44');
+    grad.addColorStop(0.35, '#FF9900');
+    grad.addColorStop(0.7, '#FF4400');
+    grad.addColorStop(1, '#AA2200');
+    sctx.fillStyle = grad;
+    sctx.fillRect(0, 0, w, h);
+
+    // Manchas de plasma brillante
+    for (var i = 0; i < 35; i++) {
+      var px = (i * 31 + timeAcc * 80) % w;
+      var py = (i * 17 + timeAcc * 60) % h;
+      var pr = 8 + Math.abs(Math.sin(i * 1.7 + timeAcc * 2.5)) * 22;
+      sctx.fillStyle = 'rgba(255,255,200,' + (0.15 + Math.abs(Math.sin(i + timeAcc * 1.8)) * 0.25) + ')';
+      sctx.beginPath();
+      sctx.ellipse(px, py, pr, pr * 0.55, i * 0.6, 0, Math.PI * 2);
+      sctx.fill();
+    }
+
+    // Células de convección
+    for (var j = 0; j < 50; j++) {
+      var cx = (j % 10) * (w / 10) + Math.sin(j + timeAcc * 1.8) * 9;
+      var cy = Math.floor(j / 10) * (h / 5) + Math.cos(j + timeAcc * 1.4) * 7;
+      var cr = 2.5 + Math.abs(Math.sin(j * 2.3 + timeAcc * 1.2)) * 4;
+      sctx.strokeStyle = 'rgba(255,180,50,0.18)';
+      sctx.lineWidth = 0.8;
+      sctx.beginPath();
+      sctx.arc(cx, cy, cr, 0, Math.PI * 2);
+      sctx.stroke();
+    }
+
+    // Manchas solares
+    for (var k = 0; k < 7; k++) {
+      var sx = (k * 53 + timeAcc * 12) % w;
+      var sy = h * (0.35 + Math.sin(k * 2.1 + timeAcc * 0.12) * 0.22);
+      var sr = 6 + Math.abs(Math.sin(k * 3.1 + timeAcc * 0.2)) * 14;
+      sctx.fillStyle = 'rgba(25,5,0,0.5)';
+      sctx.beginPath();
+      sctx.ellipse(sx, sy, sr, sr * 0.45, 0, 0, Math.PI * 2);
+      sctx.fill();
+    }
+
+    surfTex.needsUpdate = true;
+
+    // ---- Corona: pulsar ----
+    var cpArr = coronaGeo.attributes.position.array;
+    for (var ci2 = 0; ci2 < coronaCount; ci2++) {
+      var cd = coronaData[ci2];
+      cd.phase += cd.speed * dt;
+      var crr = cd.baseR + Math.sin(cd.phase) * 0.5;
+      cpArr[ci2 * 3] = Math.sin(cd.ph) * Math.cos(cd.th) * crr;
+      cpArr[ci2 * 3 + 1] = Math.sin(cd.ph) * Math.sin(cd.th) * crr;
+      cpArr[ci2 * 3 + 2] = Math.cos(cd.ph) * crr;
+    }
+    coronaGeo.attributes.position.needsUpdate = true;
+
+    // ---- Viento solar ----
+    var wpArr = windGeo.attributes.position.array;
+    for (var wi2 = 0; wi2 < windCount; wi2++) {
+      var wd = windData[wi2];
+      wd.r += wd.speed * dt;
+      if (wd.r > wd.maxR) { wd.r = R + 0.5; wd.th = Math.random() * Math.PI * 2; wd.ph = Math.acos(2 * Math.random() - 1); }
+      wpArr[wi2 * 3] = Math.sin(wd.ph) * Math.cos(wd.th) * wd.r;
+      wpArr[wi2 * 3 + 1] = Math.sin(wd.ph) * Math.sin(wd.th) * wd.r;
+      wpArr[wi2 * 3 + 2] = Math.cos(wd.ph) * wd.r;
+    }
+    windGeo.attributes.position.needsUpdate = true;
+
+    // ---- Protuberancias: pulso de opacidad ----
+    for (var pi2 = 0; pi2 < promData.length; pi2++) {
+      var pd = promData[pi2];
+      pd.phase += dt * 0.7;
+      pd.mesh.material.opacity = pd.baseOp * (0.55 + 0.45 * Math.abs(Math.sin(pd.phase)));
+    }
+
+    // ---- Erupciones ----
+    var flArr = flareGeo.attributes.position.array;
+    for (var fi2 = 0; fi2 < flareCount; fi2++) {
+      var fd = flareData[fi2];
+      if (!fd.active) {
+        fd.cd -= dt;
+        if (fd.cd <= 0) { fd.active = true; fd.prog = 0; fd.th = Math.random() * Math.PI * 2; fd.ph = Math.acos(2 * Math.random() - 1); }
+        flArr[fi2 * 3] = flArr[fi2 * 3 + 1] = flArr[fi2 * 3 + 2] = 0;
+      } else {
+        fd.prog += fd.speed * dt;
+        var fr = R + fd.prog * fd.maxD;
+        if (fd.prog > 1) { fd.active = false; fd.cd = fd.cdMax; fr = R; }
+        flArr[fi2 * 3] = Math.sin(fd.ph) * Math.cos(fd.th) * fr;
+        flArr[fi2 * 3 + 1] = Math.sin(fd.ph) * Math.sin(fd.th) * fr;
+        flArr[fi2 * 3 + 2] = Math.cos(fd.ph) * fr;
+      }
+    }
+    flareGeo.attributes.position.needsUpdate = true;
+
+    // ---- Chispas ----
+    var spArr = sparkGeo.attributes.position.array;
+    for (var si2 = 0; si2 < sparkCount; si2++) {
+      var sd = sparkData[si2];
+      sd.cd -= dt;
+      if (sd.cd <= 0 && sd.life <= 0) { sd.life = sd.maxLife; sd.th = Math.random() * Math.PI * 2; sd.ph = Math.acos(2 * Math.random() - 1); }
+      if (sd.life > 0) {
+        sd.life -= dt;
+        var sr = R + (sd.maxLife - sd.life) * sd.speed;
+        if (sd.life <= 0) { sd.cd = Math.random() * 2; sr = 0; }
+        spArr[si2 * 3] = Math.sin(sd.ph) * Math.cos(sd.th) * sr;
+        spArr[si2 * 3 + 1] = Math.sin(sd.ph) * Math.sin(sd.th) * sr;
+        spArr[si2 * 3 + 2] = Math.cos(sd.ph) * sr;
+      } else { spArr[si2 * 3] = spArr[si2 * 3 + 1] = spArr[si2 * 3 + 2] = 0; }
+    }
+    sparkGeo.attributes.position.needsUpdate = true;
+
+    // ---- Luz dinámica orgánica ----
+    var pulse = 5.5 + Math.sin(now * 0.0013) * 1.0 + Math.sin(now * 0.0021) * 0.6 + Math.sin(now * 0.0037) * 0.4;
+    sunLight.setAttribute('intensity', pulse.toFixed(1));
+
+    requestAnimationFrame(animateSun);
+  }
+
+  requestAnimationFrame(animateSun);
   container.appendChild(sunGroup);
 }
 
