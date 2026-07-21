@@ -1,80 +1,71 @@
-# Museo del Sistema Solar - VR
+# 🪐 Museo del Sistema Solar - Experiencia VR
 
-Museo inmersivo del Sistema Solar compatible con **WebXR** y **Meta Quest**, construido con **A-Frame 1.5.0**.
+## ¿Qué es esto?
 
-## Características
+Un **museo virtual en 3D** donde puedes caminar libremente por una sala futurista de 80×80 metros y explorar el Sistema Solar como nunca antes. Lo abres en tu navegador, sin instalar nada, y funciona tanto en computadora como en visores de realidad virtual (Meta Quest, HTC Vive, etc.).
 
-### Sistema Solar
-- **Sol** con efecto de plasma, glow pulsante, partículas solares y luz dinámica
-- **8 planetas** con texturas procedurales: Mercurio, Venus, Tierra (con Luna), Marte, Júpiter (4 lunas), Saturno (anillos), Urano (anillo), Neptuno
-- **Cinturón de asteroides** con 600 rocas y 800 partículas de polvo
-- Órbitas visibles y rotación planetaria
+## ¿Qué vas a encontrar?
 
-### Museo (80×80×24m)
-- Sala futurista con suelo de rejilla, techo con tiras LED, 4 paredes con paneles tecnológicos
-- **8 cuadros informativos** (10×7.5m) con datos científicos de cada planeta
-- Pilares decorativos en esquinas con luces
+Al entrar estás en un museo enorme con **el Sol en el centro y los 8 planetas girando a su alrededor**. Puedes caminar entre ellos, verlos de cerca, y aprender sobre cada uno.
 
-### Exhibiciones
-- **Agujero negro** con disco de acreción, anillo de fotones, chorros de rayos y lente gravitacional
-- **Supernova** con 1200 partículas en explosión continua y ondas de choque
-- **Púlsar** con haces de luz, anillos magnéticos y rotación rápida
-- **Agujero de gusano** con túnel espiral y partículas
-- **Vía Láctea** con 8000 partículas en espiral, bulbo central y nebulosas
-- **Astronauta flotante** a escala 1:1 con nave espacial y llamas de propulsores
-- **6 nebulosas** tenues distribuidas por la sala
-- **10 cometas** con estelas de partículas
-- **3 naves humanas** + **3 naves extraterrestres** patrullando
-- **500 estrellas parpadeantes** por toda la sala
+### Planetas y astros
+- ☀️ **El Sol** brilla, pulsa y emite partículas de fuego constantemente. Ilumina toda la sala.
+- 🪨 **Mercurio, Venus, Tierra, Marte** — los planetas rocosos, cada uno con su color y textura realista.
+- 🌍 **La Tierra** tiene su Luna orbitando.
+- 🪐 **Júpiter** es enorme, con 4 lunas girando a su alrededor.
+- 💫 **Saturno** tiene sus anillos característicos.
+- 🔵 **Urano y Neptuno**, los gigantes de hielo en los bordes del sistema.
+- ☄️ **Cinturón de asteroides** entre Marte y Júpiter con cientos de rocas flotando.
+- 🕳️ **Agujero negro** con su disco brillante, chorros de energía y efecto de lente gravitacional.
+- 💥 **Supernova** explotando continuamente con ondas de choque y partículas.
+- ⚡ **Púlsar** girando a toda velocidad con haces de luz.
+- 🌌 **Agujero de gusano** con partículas en espiral.
+- 🌠 **Vía Láctea** flotando sobre el museo con miles de estrellas.
 
-### Interacción
-- **Panel flotante 3D** al mirar un objeto 2 segundos
-- **Overlay HTML** al acercarse a un cuadro (<10m)
-- WASD + ratón + scroll
-- Cursor VR con anillo de fusión
-- Colisiones con paredes
-- Teleport VR y soporte Meta Quest
-- Atajos: `H` cerrar panel, `M` ayuda, `F` vuelo, `Esc` cerrar todo
+### Naves y objetos
+- 👨‍🚀 **Astronauta flotando** a escala real junto a su nave espacial, con propulsores encendidos.
+- 🚀 **6 naves** (3 humanas y 3 extraterrestres) volando por toda la sala.
+- ☄️ **10 cometas** con largas estelas brillantes.
+- ✨ **500 estrellas parpadeantes** por todo el museo.
+- 🌫️ **6 nebulosas** de colores en las paredes y techos.
 
-## Estructura del proyecto
+### Cuadros informativos
+En cada pared hay **8 cuadros gigantes** (10×7.5 metros) con:
+- Imagen del planeta
+- Distancia al Sol, tamaño, masa, gravedad
+- Temperatura, duración del día y del año
+- Número de lunas y datos curiosos
 
-```
-game/
-├── index.html          # Escena principal, cámara VR, overlays
-├── css/
-│   └── style.css       # UI, pantalla de carga, overlays HTML
-└── js/
-    ├── components.js   # 12 componentes A-Frame (orbit, glow, patrol, comet...)
-    ├── planets.js      # Datos planetarios, texturas procedurales, sistema solar, naves, cometas, exhibiciones
-    ├── museum.js       # Sala del museo, paredes, cuadros, iluminación
-    └── ui.js           # Paneles flotantes, interacción, overlays
-```
+Solo tienes que **acercarte** a un cuadro y la información aparece automáticamente.
 
-## Cómo ejecutar
+### ¿Cómo te mueves?
+- **W A S D** para caminar
+- **Ratón** para mirar en todas direcciones
+- **Scroll** para acercar/alejar
+- **M** para ver los controles
+- **F** para activar modo vuelo
+- **Esc** para cerrar paneles
 
-1. Clona el repositorio
-2. Abre `index.html` en tu navegador (Chrome/Firefox recomendado)
-3. Para VR: haz clic en el botón 🥽 (abajo a la derecha)
+### ¿Realidad virtual?
+Sí. Si tienes un visor VR (Meta Quest, Oculus, HTC Vive), conecta el visor al navegador, haz clic en el botón VR y **entras físicamente al museo**. Puedes caminar por la sala como si estuvieras ahí.
 
-O usa **GitHub Pages**: [https://TU-USUARIO.github.io/sistema-solar-vr](https://TU-USUARIO.github.io/sistema-solar-vr)
+## ¿Cómo se hizo?
 
-## Controles
+Este proyecto fue construido completamente desde cero usando:
 
-| Tecla | Acción |
-|---|---|
-| W A S D | Moverse |
-| Ratón | Mirar alrededor |
-| Scroll | Zoom (en algunos navegadores) |
-| M | Mostrar/ocultar ayuda |
-| H | Cerrar panel de información |
-| F | Alternar modo vuelo |
-| Esc | Cerrar todos los paneles |
+- **A-Frame 1.5.0** — framework web para crear experiencias 3D y VR
+- **HTML, CSS y JavaScript** — sin dependencias externas innecesarias
+- **Texturas procedurales** — cada planeta tiene su propia textura generada por código, sin imágenes externas
+- **Shaders y partículas** — el Sol, supernova, agujero negro y demás efectos usan sistemas de partículas programados a mano
+- **WebXR** — estándar web para realidad virtual, compatible con cualquier visor moderno
 
-## Requisitos
+Todo el código está organizado en 6 archivos modulares y suma más de **4,900 líneas de código**.
 
-- Navegador moderno con WebGL (Chrome, Firefox, Edge)
-- Para VR: navegador compatible con WebXR + visor VR (Meta Quest, HTC Vive, etc.)
+## Pruébalo
 
-## Licencia
+- **Demo en vivo**: [https://fersegundo22.github.io/Sistema-Solar-VR/](https://fersegundo22.github.io/Sistema-Solar-VR/)
+- **Código fuente**: [https://github.com/fersegundo22/Sistema-Solar-VR](https://github.com/fersegundo22/Sistema-Solar-VR)
 
-Proyecto educativo de código abierto.
+---
+
+*Proyecto educativo de código abierto. Creado con fines de divulgación científica y aprendizaje.*
